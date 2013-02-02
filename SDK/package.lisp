@@ -22,4 +22,10 @@
 	   #:show-friends-bilateral
 	   #:*app-key*
 	   #:*app-secret*
-	   #:*redirect_uri*))
+	   #:*redirect_uri*
+	   #:user-name
+	   #:password
+	   #:access-token
+	   #:expires-in
+	   #:remind-in
+	   #:uid))

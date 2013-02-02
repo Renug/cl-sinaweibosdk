@@ -26,7 +26,7 @@
 	:accessor uid)))
 
 (defun request-code (self)
-  "OAuth2的authorize接口"
+  "The OAuth2 The authorize interface"
   (with-slots (user-name password) self
     (multiple-value-bind (body-or-stream status-code  headers uri stream must-close reason-phrase)
 	(drakma:http-request "https://open.weibo.cn/2/oauth2/authorize"
@@ -50,7 +50,7 @@
 	  (error (format nil "request code error:~a" status-code))))))
 
 (defun request-token (self code)
-  "OAuth2的access_token接口"
+  "The OAuth2 The access_token interface"
     (multiple-value-bind (body-or-stream)
       (drakma:http-request "https://api.weibo.com/oauth2/access_token"
                          :method :POST
@@ -96,69 +96,69 @@
          (values retval reason-phrase status-code))))))
 
 (defuntion update-status (text)
-  "发布一条新微博"
+  "Post a new weibo"
   (generic-request "https://api.weibo.com/2/statuses/update.json" 
                     self (list (cons "status" text)) :POST))
 
 (defuntion show-user-counts (uids)
-  "批量获取用户的粉丝数、关注数、微博数"
+  "Volume to obtain the user's number of fans, concerned about the number, the number of weibo"
   (generic-request "https://api.weibo.com/2/users/counts.json" 
                    self (list (cons "uids" (format nil "~{~a~^,~}" uids)))))
 
 (defuntion show-user-friends (uid)
-  "获取用户的关注列表"
+  "Get the user watchlist"
   (generic-request "https://api.weibo.com/2/friendships/friends.json" 
                    self (list (cons "uid" uid))))
 
 (defuntion show-user-followers (uid)
-  "获取用户的粉丝列表"
+  "Get the user's fan list"
   (generic-request "https://api.weibo.com/2/friendships/followers.json" 
                    self (list (cons "uid" (format nil "~a" uid)))))
 
 (defuntion show-public-timeline (count)
-  "返回最新的200条公共微博，返回结果非完全实时"
+  "Return the latest 200 public weibo return incomplete results in real time"
   (generic-request "https://api.weibo.com/2/statuses/public_timeline.json" 
                    self (list (cons "count" (format nil "~a" count)))))
 
 (defuntion show-mentions ()
-  "获取最新的提到登录用户的微博列表，即@我的微博"
+  "Get the latest mentioned weibo list of the logged-on user"
   (generic-request "https://api.weibo.com/2/statuses/mentions.json" 
                    self))
 
 (defuntion show-emotions ()
-  "获取微博官方表情的详细信息"
+  "Get weibo official expressions"
   (generic-request "https://api.weibo.com/2/emotions.json" 
                    self))
 
 (defuntion show-followers-active (uid)
-  "获取用户的活跃粉丝列表"
+  "Get active fan list"
   (generic-request "https://api.weibo.com/2/friendships/followers/active.json" 
                    self (list (cons "uid" (format nil "~a" uid)))))
 
 (defuntion show-user-timeline (uid)
-  "获取某个用户最新发表的微博列表"
+  "Access to a recently published list of weibo"
   (generic-request "https://api.weibo.com/2/statuses/user_timeline.json" 
                    self (list (cons "uid" (format nil "~a" uid)))))
 
 (defuntion show-friends-timeline ()
-  "获取当前登录用户及其所关注用户的最新微博"
+  "Get the current logged-on user, and its latest concern weibo"
   (generic-request "https://api.weibo.com/2/statuses/friends_timeline.json" 
                    self))
 
 (defuntion show-home-timeline (page-size page)
-  "获取当前登录用户及其所关注用户的最新微博"
+  "Get the current logged-on user, and its latest concern weibo"
   (generic-request "https://api.weibo.com/2/statuses/home_timeline.json" 
                    self (list (cons "page" (format nil "~a" page))
                               (cons "count" (format nil "~a" page-size)))))
 
 (defuntion show-friends-timeline-ids (page-size page)
-  "获取当前登录用户及其所关注用户的最新微博的ID"
+  "he latest ID weiboGet the current logged-on user, its focus on users"
   (generic-request "https://api.weibo.com/2/statuses/friends_timeline/ids.json" 
                    self (list (cons "page" (format nil "~a" page))
                               (cons "count" (format nil "~a" page-size)))))
 
 (defuntion show-friends-in-common (page-size page uid)
-  "获取两个用户之间的共同关注人列表"
+  "Get between two users of common concern list"
   (generic-request "https://api.weibo.com/2/friendships/friends/in_common.json" 
                    self (list (cons "page" (format nil "~a" page))
                               (cons "count" (format nil "~a" page-size))
@@ -166,7 +166,7 @@
 
 
 (defuntion show-friends-bilateral (page-size page uid)
-  "获取用户的双向关注列表，即互粉列表"
+  "Get the the user bidirectional concern list, that mutual powder list"
   (generic-request "https://api.weibo.com/2/friendships/friends/bilateral.json" 
                    self (list (cons "page" (format nil "~a" page))
                               (cons "count" (format nil "~a" page-size))
