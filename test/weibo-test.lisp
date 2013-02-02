@@ -8,8 +8,8 @@
           (format t "~a failed ~a ~a ~a~%" (symbol-name ',f-name) reason-phrase status-code json-string))))
 
 (defun do-tests ()
-   (setf *app-key* "834094302")
-  (setf *app-secret* "ba6cf551d61c4eb1839779ee127272bb")
+   (setf *app-key* "2453117888")
+  (setf *app-secret* "75c04189726fd12a75b0d21ce1e10d54")
   (setf *redirect_uri* "https://api.weibo.com/oauth2/default.html")
   (let ((weibo-engine (make-instance 'SinaWeibo :user-name "rannger@sina.cn" :password "123"))
         (uid "1739928273"))

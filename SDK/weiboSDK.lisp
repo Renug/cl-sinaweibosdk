@@ -28,7 +28,7 @@
 (defun request-code (self)
   "OAuth2的authorize接口"
   (with-slots (user-name password) self
-    (multiple-value-bind (body-or-stream status-code  headers)
+    (multiple-value-bind (body-or-stream status-code  headers uri stream must-close reason-phrase)
 	(drakma:http-request "https://open.weibo.cn/2/oauth2/authorize"
 			     :method :post
 			     :parameters `(("userId" . ,user-name)
@@ -44,8 +44,10 @@
 					   ("regCallback" . "")
 					   ("isLoginSina" . ""))
 			     :additional-headers `(("Referer" . ,(format nil "https://api.weibo.com/oauth2/authorize?response_type=code&redirect_uri=~a" *redirect_uri*))))
-      (with-input-from-string (strm (puri:uri-query (puri:parse-uri (drakma:header-value :LOCATION headers))))
-	(cdr (assoc "code" (parse-key-value-pairs strm) :test #'equalp))))))
+      (if (= 302 status-code)
+	  (with-input-from-string (strm (puri:uri-query (puri:parse-uri (drakma:header-value :LOCATION headers))))
+	    (cdr (assoc "code" (parse-key-value-pairs strm) :test #'equalp)))
+	  (error "request code error:~a ~a" status-code body-or-stream)))))
 
 (defun request-token (self code)
   "OAuth2的access_token接口"
@@ -57,19 +59,18 @@
 				       ("client_id" . ,*app-key*) 
 				       ("client_secret" . ,*app-secret*) 
 				       ("grant_type" . "authorization_code")))
-      (with-slots (access-token expires-in remind-in uid) self
-	(let ((return-values 
-	       (json:decode-json-from-string (if (typep body-or-stream 'string)
+      (json:decode-json-from-string (if (typep body-or-stream 'string)
 						 body-or-stream
 						 (flexi-streams:octets-to-string body-or-stream :external-format :utf-8)))))
-	  (setf access-token (cdr (assoc :ACCESS--TOKEN return-values)))
-	  (setf expires-in (cdr (assoc :EXPIRES--IN return-values)))
-	  (setf remind-in (cdr (assoc :REMIND--IN return-values)))
-	  (setf uid (cdr (assoc :UID return-values)))))))
       
 
 (defmethod login ((self SinaWeibo))
-  (request-token self (request-code self)))
+  (let ((return-values (request-token self (request-code self))))
+    (with-slots (access-token expires-in remind-in uid) self
+	  (setf access-token (cdr (assoc :ACCESS--TOKEN return-values)))
+	  (setf expires-in (cdr (assoc :EXPIRES--IN return-values)))
+	  (setf remind-in (cdr (assoc :REMIND--IN return-values)))
+	  (setf uid (cdr (assoc :UID return-values))))))
 
 (defun generic-request (url weibo &optional http-paraments (method :GET))
   (with-slots (user-name password access-token) weibo
@@ -91,7 +92,7 @@
                              uri          
                              stream 
                              must-close reason-phrase) (funcall #'(lambda () ,@body))
-       (let* ((retval (flexi-streams:octets-to-string body-or-stream)))
+       (let* ((retval (flexi-streams:octets-to-string body-or-stream :external-format :utf-8)))
          (values retval reason-phrase status-code))))))
 
 (defuntion update-status (text)
