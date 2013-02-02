@@ -43,9 +43,13 @@
 					   ("from" . "")
 					   ("regCallback" . "")
 					   ("isLoginSina" . ""))
-			     :additional-headers `(("Referer" . ,(format nil "https://api.weibo.com/oauth2/authorize?response_type=code&redirect_uri=~a" *redirect_uri*))))
+			     :additional-headers 
+			     `(("Referer" .  ,(format nil  "https://api.weibo.com/oauth2/authorize?response_type=code&redirect_uri=~a" *redirect_uri*))))
       (if (= 302 status-code)
-	  (with-input-from-string (strm (puri:uri-query (puri:parse-uri (drakma:header-value :LOCATION headers))))
+	  (with-input-from-string (strm (puri:uri-query 
+					 (puri:parse-uri 
+					  (drakma:header-value 
+					   :LOCATION headers))))
 	    (cdr (assoc "code" (parse-key-value-pairs strm) :test #'equalp)))
 	  (error (format nil "request code error:~a" status-code))))))
 
@@ -59,9 +63,11 @@
 				       ("client_id" . ,*app-key*) 
 				       ("client_secret" . ,*app-secret*) 
 				       ("grant_type" . "authorization_code")))
-      (json:decode-json-from-string (if (typep body-or-stream 'string)
-						 body-or-stream
-						 (flexi-streams:octets-to-string body-or-stream :external-format :utf-8)))))
+      (json:decode-json-from-string 
+       (if (typep body-or-stream 'string)
+	   body-or-stream
+	   (flexi-streams:octets-to-string 
+	    body-or-stream :external-format :utf-8)))))
       
 
 (defmethod login ((self SinaWeibo))
@@ -91,8 +97,10 @@
                              headers 
                              uri          
                              stream 
-                             must-close reason-phrase) (funcall #'(lambda () ,@body))
-       (let* ((retval (flexi-streams:octets-to-string body-or-stream :external-format :utf-8)))
+                             must-close 
+			     reason-phrase) (funcall #'(lambda () ,@body))
+       (let* ((retval (flexi-streams:octets-to-string body-or-stream 
+						      :external-format :utf-8)))
          (values retval reason-phrase status-code))))))
 
 (defuntion update-status (text)
