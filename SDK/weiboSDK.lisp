@@ -47,7 +47,7 @@
       (if (= 302 status-code)
 	  (with-input-from-string (strm (puri:uri-query (puri:parse-uri (drakma:header-value :LOCATION headers))))
 	    (cdr (assoc "code" (parse-key-value-pairs strm) :test #'equalp)))
-	  (error (format nil "request code error:~a ~a" status-code body-or-stream))))))
+	  (error (format nil "request code error:~a" status-code))))))
 
 (defun request-token (self code)
   "OAuth2的access_token接口"

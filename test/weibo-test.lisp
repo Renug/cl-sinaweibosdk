@@ -3,7 +3,7 @@
 
 (defmacro f-test (f-name &rest parament)
   `(deftest ,(intern (format nil "test-~a" f-name))
-       (let ((weibo-engine (make-instance 'SinaWeibo :user-name "rannger@sina.cn" :password "123")))
+       (let ((weibo-engine (make-instance 'SinaWeibo :user-name "rannger@sina.cn" :password "yue_yang1963")))
 	 (login weibo-engine)
 	 (multiple-value-bind (json-string reason-phrase status-code) (,f-name weibo-engine ,@parament)
 	   (if (= status-code 200)
