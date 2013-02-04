@@ -45,17 +45,19 @@
 					   ("isLoginSina" . ""))
 			     :additional-headers 
 			     `(("Referer" .  ,(format nil  "https://api.weibo.com/oauth2/authorize?response_type=code&redirect_uri=~a" *redirect_uri*))))
-      (if (= 302 status-code)
+      (if (equal 302 status-code)
 	  (with-input-from-string (strm (puri:uri-query 
 					 (puri:parse-uri 
 					  (drakma:header-value 
 					   :LOCATION headers))))
 	    (cdr (assoc "code" (parse-key-value-pairs strm) :test #'equalp)))
-	  (error (format nil "request code error:~a" status-code))))))
+	  (error 'request-code-error 
+                 :status-code status-code 
+                 :content-string body-or-stream)))))
 
 (defun request-token (self code)
   "The OAuth2 The access_token interface"
-    (multiple-value-bind (body-or-stream)
+    (multiple-value-bind (body-or-stream status-code)
       (drakma:http-request "https://api.weibo.com/oauth2/access_token"
                          :method :POST
                          :parameters `(("code". ,code) 
@@ -63,11 +65,15 @@
 				       ("client_id" . ,*app-key*) 
 				       ("client_secret" . ,*app-secret*) 
 				       ("grant_type" . "authorization_code")))
-      (json:decode-json-from-string 
-       (if (typep body-or-stream 'string)
+      (if (equal 200 status-code)
+        (json:decode-json-from-string 
+         (if (typep body-or-stream 'string)
 	   body-or-stream
 	   (flexi-streams:octets-to-string 
-	    body-or-stream :external-format :utf-8)))))
+	    body-or-stream :external-format :utf-8)))
+        (error 'request-token-error 
+               :status-code status-code 
+               :content-string body-or-stream))))
       
 
 (defmethod login ((self SinaWeibo))
@@ -81,11 +87,11 @@
 (defun generic-request (url weibo &optional http-paraments (method :GET))
   (with-slots (user-name password access-token) weibo
     (if (null access-token) 
-	(error "access-token is null"))
-    (drakma:http-request url
-                         :method method
-                         :parameters (append `(("access_token" . ,access-token))
-                                             http-paraments))))
+	(error 'token-null-error)
+        (drakma:http-request url
+                           :method method
+                           :parameters (append `(("access_token" . ,access-token))
+                                               http-paraments)))))
 
 (defmacro defuntion (function-name paraments documentation &body body)
   `(progn 
@@ -99,9 +105,13 @@
                              stream 
                              must-close 
 			     reason-phrase) (funcall #'(lambda () ,@body))
-       (let* ((retval (flexi-streams:octets-to-string body-or-stream 
-						      :external-format :utf-8)))
-         (values retval reason-phrase status-code))))))
+         (let* ((retval (flexi-streams:octets-to-string body-or-stream 
+                                                          :external-format :utf-8)))
+           (if (equal 200 status-code)
+             (values retval reason-phrase status-code)
+           (error 'sinaWeibosdk-error 
+                  :status-code status-code 
+                  :content-string retval)))))))
 
 (defuntion update-status (text)
   "Post a new weibo"
@@ -109,12 +119,12 @@
                     self (list (cons "status" text)) :POST))
 
 (defuntion show-user-counts (uids)
-  "Volume to obtain the user's number of fans, concerned about the number, the number of weibo"
+  "Batch get the user's number of fans, oncerned about the number of people, the number of weibo"
   (generic-request "https://api.weibo.com/2/users/counts.json" 
                    self (list (cons "uids" (format nil "~{~a~^,~}" uids)))))
 
 (defuntion show-user-friends (uid)
-  "Get the user watchlist"
+  "Get the user's watchlist"
   (generic-request "https://api.weibo.com/2/friendships/friends.json" 
                    self (list (cons "uid" uid))))
 
@@ -124,7 +134,7 @@
                    self (list (cons "uid" (format nil "~a" uid)))))
 
 (defuntion show-public-timeline (count)
-  "Return the latest 200 public weibo return incomplete results in real time"
+  "Return the latest 200 public weibo ,but return results are not completely in real time."
   (generic-request "https://api.weibo.com/2/statuses/public_timeline.json" 
                    self (list (cons "count" (format nil "~a" count)))))
 
@@ -160,7 +170,7 @@
                               (cons "count" (format nil "~a" page-size)))))
 
 (defuntion show-friends-timeline-ids (page-size page)
-  "he latest ID weiboGet the current logged-on user, its focus on users"
+  "Get the current logged-in user and his attention to the user ID of the latest weibo"
   (generic-request "https://api.weibo.com/2/statuses/friends_timeline/ids.json" 
                    self (list (cons "page" (format nil "~a" page))
                               (cons "count" (format nil "~a" page-size)))))

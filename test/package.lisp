@@ -2,5 +2,4 @@
 
 (defpackage weiboSDK.test
   (:use #:cl #:SinaWeiboSDK #:REGRESSION-TEST)
-  (:export #:run-tests
-	   #:clean-tests))
+  (:export #:run-tests))

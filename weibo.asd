@@ -9,5 +9,6 @@
   :author "Rannger L"
   :depends-on ("drakma" "cl-json")
   :components ((:file "SDK/package")
-           (:file "SDK/pkvpl" :depends-on ("SDK/package"))
-           (:file "SDK/weiboSDK" :depends-on ("SDK/package" "SDK/pkvpl"))))
+               (:file "SDK/pkvpl" :depends-on ("SDK/package"))
+               (:file "SDK/condition" :depends-on ("SDK/package"))
+               (:file "SDK/weiboSDK" :depends-on ("SDK/package" "SDK/pkvpl"))))
