@@ -3,7 +3,7 @@
 
 (defmacro f-test (f-name &rest parament)
   `(deftest ,(intern (format nil "test-~a" f-name))
-       (let ((weibo-engine (make-instance 'SinaWeibo :user-name "rannger@sina.cn" :password "yue_yang1963")))
+       (let ((weibo-engine (make-instance 'SinaWeibo :user-name "rannger@sina.cn" :password "123")))
 	 (login weibo-engine)
 	 (multiple-value-bind (json-string reason-phrase status-code) (,f-name weibo-engine ,@parament)
 	   (if (= status-code 200)
@@ -12,7 +12,7 @@
      t))
 
 ;(f-test login)
-;(f-test update-status "lisp test")
+(f-test update-status "lisp test")
 (f-test show-user-counts '("1739928273"))
 (f-test show-user-friends "1739928273")
 (f-test show-user-followers "1739928273")
@@ -28,9 +28,9 @@
 
 
 (defun run-tests ()
-  (setf *app-key* "482040646")
-  (setf *app-secret* "e1fa659ae3e6d1a41d7e74d3dc1ab868")
-  (setf *redirect_uri* "http://passport.tianya.cn/login/sinaweibo.do")
+  (setf *app-key* "834094302")
+  (setf *app-secret* "ba6cf551d61c4eb1839779ee127272bb")
+  (setf *redirect_uri* "https://api.weibo.com/oauth2/default.html")
   (do-tests))
 
 
