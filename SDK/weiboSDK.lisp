@@ -28,7 +28,7 @@
 (defun request-code (self)
   "The OAuth2 The authorize interface"
   (with-slots (user-name password) self
-    (multiple-value-bind (body-or-stream status-code  headers uri stream must-close reason-phrase)
+    (multiple-value-bind (body-or-stream status-code headers)
 	(drakma:http-request "https://open.weibo.cn/2/oauth2/authorize"
 			     :method :post
 			     :parameters `(("userId" . ,user-name)
@@ -55,7 +55,7 @@
                  :status-code status-code 
                  :content-string body-or-stream)))))
 
-(defun request-token (self code)
+(defun request-token (code)
   "The OAuth2 The access_token interface"
     (multiple-value-bind (body-or-stream status-code)
       (drakma:http-request "https://api.weibo.com/oauth2/access_token"
@@ -77,7 +77,7 @@
       
 
 (defmethod login ((self SinaWeibo))
-  (let ((return-values (request-token self (request-code self))))
+  (let ((return-values (request-token (request-code self))))
     (with-slots (access-token expires-in remind-in uid) self
 	  (setf access-token (cdr (assoc :ACCESS--TOKEN return-values)))
 	  (setf expires-in (cdr (assoc :EXPIRES--IN return-values)))
@@ -85,7 +85,7 @@
 	  (setf uid (cdr (assoc :UID return-values))))))
 
 (defun generic-request (url weibo &optional http-paraments (method :GET))
-  (with-slots (user-name password access-token) weibo
+  (with-slots (access-token) weibo
     (if (null access-token) 
 	(error 'token-null-error)
         (drakma:http-request url
@@ -99,16 +99,11 @@
        (:documentation ,documentation))
      (defmethod ,function-name ((self SinaWeibo) ,@paraments)
        (multiple-value-bind (body-or-stream 
-                             status-code 
-                             headers 
-                             uri          
-                             stream 
-                             must-close 
-			     reason-phrase) (funcall #'(lambda () ,@body))
+                             status-code) (funcall #'(lambda () ,@body))
          (let* ((retval (flexi-streams:octets-to-string body-or-stream 
                                                           :external-format :utf-8)))
            (if (equal 200 status-code)
-             (values retval reason-phrase status-code)
+             (values retval status-code)
            (error 'sinaWeibosdk-error 
                   :status-code status-code 
                   :content-string retval)))))))
@@ -116,27 +111,27 @@
 (defuntion update-status (text)
   "Post a new weibo"
   (generic-request "https://api.weibo.com/2/statuses/update.json" 
-                    self (list (cons "status" text)) :POST))
+                    self `(("status" . ,text)) :POST))
 
 (defuntion show-user-counts (uids)
   "Batch get the user's number of fans, oncerned about the number of people, the number of weibo"
   (generic-request "https://api.weibo.com/2/users/counts.json" 
-                   self (list (cons "uids" (format nil "~{~a~^,~}" uids)))))
+                   self `(("uids" . ,(format nil "~{~a~^,~}" uids)))))
 
 (defuntion show-user-friends (uid)
   "Get the user's watchlist"
   (generic-request "https://api.weibo.com/2/friendships/friends.json" 
-                   self (list (cons "uid" uid))))
+                   self `(("uid" . ,uid))))
 
 (defuntion show-user-followers (uid)
   "Get the user's fan list"
   (generic-request "https://api.weibo.com/2/friendships/followers.json" 
-                   self (list (cons "uid" (format nil "~a" uid)))))
+                   self `(("uid" . ,(format nil "~a" uid)))))
 
 (defuntion show-public-timeline (count)
   "Return the latest 200 public weibo ,but return results are not completely in real time."
   (generic-request "https://api.weibo.com/2/statuses/public_timeline.json" 
-                   self (list (cons "count" (format nil "~a" count)))))
+                   self `(("count" . ,(format nil "~a" count)))))
 
 (defuntion show-mentions ()
   "Get the latest mentioned weibo list of the logged-on user"
@@ -151,12 +146,12 @@
 (defuntion show-followers-active (uid)
   "Get active fan list"
   (generic-request "https://api.weibo.com/2/friendships/followers/active.json" 
-                   self (list (cons "uid" (format nil "~a" uid)))))
+                   self `(("uid" . ,(format nil "~a" uid)))))
 
 (defuntion show-user-timeline (uid)
   "Access to a recently published list of weibo"
   (generic-request "https://api.weibo.com/2/statuses/user_timeline.json" 
-                   self (list (cons "uid" (format nil "~a" uid)))))
+                   self `(("uid" . ,(format nil "~a" uid)))))
 
 (defuntion show-friends-timeline ()
   "Get the current logged-on user, and its latest concern weibo"
@@ -166,28 +161,28 @@
 (defuntion show-home-timeline (page-size page)
   "Get the current logged-on user, and its latest concern weibo"
   (generic-request "https://api.weibo.com/2/statuses/home_timeline.json" 
-                   self (list (cons "page" (format nil "~a" page))
-                              (cons "count" (format nil "~a" page-size)))))
+                   self `(("page" . ,(format nil "~a" page))
+                              ("count" . ,(format nil "~a" page-size)))))
 
 (defuntion show-friends-timeline-ids (page-size page)
   "Get the current logged-in user and his attention to the user ID of the latest weibo"
   (generic-request "https://api.weibo.com/2/statuses/friends_timeline/ids.json" 
-                   self (list (cons "page" (format nil "~a" page))
-                              (cons "count" (format nil "~a" page-size)))))
+                   self `(("page" . ,(format nil "~a" page))
+                          ("count" . ,(format nil "~a" page-size)))))
 
 (defuntion show-friends-in-common (page-size page uid)
   "Get between two users of common concern list"
   (generic-request "https://api.weibo.com/2/friendships/friends/in_common.json" 
-                   self (list (cons "page" (format nil "~a" page))
-                              (cons "count" (format nil "~a" page-size))
-                              (cons "uid" (format nil "~a" uid)))))
+                   self `(("page" . ,(format nil "~a" page))
+                          ("count" . ,(format nil "~a" page-size))
+                          ("uid" . ,(format nil "~a" uid)))))
 
 
 (defuntion show-friends-bilateral (page-size page uid)
   "Get the the user bidirectional concern list, that mutual powder list"
   (generic-request "https://api.weibo.com/2/friendships/friends/bilateral.json" 
-                   self (list (cons "page" (format nil "~a" page))
-                              (cons "count" (format nil "~a" page-size))
-                              (cons "uid" (format nil "~a" uid)))))
+                   self `(("page" . ,(format nil "~a" page))
+                          ("count" . ,(format nil "~a" page-size))
+                          ("uid" . ,(format nil "~a" uid)))))
 
 
