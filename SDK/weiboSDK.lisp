@@ -44,7 +44,8 @@
 					   ("regCallback" . "")
 					   ("isLoginSina" . ""))
 			     :additional-headers 
-			     `(("Referer" .  ,(format nil  "https://api.weibo.com/oauth2/authorize?response_type=code&redirect_uri=~a" *redirect_uri*))))
+			     `(("Referer" .  ,(format nil  "https://api.weibo.com/oauth2/authorize?
+response_type=code&redirect_uri=~a" *redirect_uri*))))
       (if (equal 302 status-code)
 	  (with-input-from-string (strm (puri:uri-query 
 					 (puri:parse-uri 
